@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gym">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon.svg">
+<title>Jay's Gym Program</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --border: #2a2a2a;
+    --push: #e8401a; --pull: #1a8fe8; --legs: #22c55e;
+    --text: #f0f0f0; --muted: #888;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; padding: 16px; padding-top: calc(16px + var(--safe-top)); padding-bottom: calc(16px + var(--safe-bottom)); max-width: 480px; margin: 0 auto; }
+  header { padding: 20px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .title-row { display: flex; align-items: center; gap: 8px; }
+  h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; text-transform: uppercase; line-height: 1; flex: 1; }
+  #title-input { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; text-transform: uppercase; background: transparent; border: none; border-bottom: 2px solid var(--push); color: var(--text); outline: none; width: 100%; display: none; }
+  .edit-title-btn { background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 4px 8px; }
+  header p { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab { flex: 1; padding: 10px 4px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; cursor: pointer; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .tab.push.active { background: var(--push); color: #fff; border-color: var(--push); }
+  .tab.pull.active { background: var(--pull); color: #fff; border-color: var(--pull); }
+  .tab.legs.active { background: var(--legs); color: #fff; border-color: var(--legs); }
+  .day-label { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .pill { font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+  .push-day .pill { background: rgba(232,64,26,0.15); color: var(--push); }
+  .pull-day .pill { background: rgba(26,143,232,0.15); color: var(--pull); }
+  .legs-day .pill { background: rgba(34,197,94,0.15); color: var(--legs); }
+  .muscles { color: var(--muted); font-size: 0.8rem; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 16px; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .push-day .progress-fill { background: var(--push); }
+  .pull-day .progress-fill { background: var(--pull); }
+  .legs-day .progress-fill { background: var(--legs); }
+  .exercise-list { display: flex; flex-direction: column; gap: 8px; }
+  .exercise { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
+  .exercise::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .push-day .exercise::before { background: var(--push); }
+  .pull-day .exercise::before { background: var(--pull); }
+  .legs-day .exercise::before { background: var(--legs); }
+  .exercise.done { opacity: 0.4; }
+  .exercise.done .ex-name { text-decoration: line-through; }
+  .ex-info { flex: 1; }
+  .ex-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 600; text-transform: uppercase; }
+  .ex-target { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .ex-sets { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700; text-align: right; white-space: nowrap; }
+  .ex-sets small { display: block; font-size: 0.65rem; font-weight: 400; color: var(--muted); text-transform: uppercase; }
+  .check-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); background: none; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: transparent; cursor: pointer; padding: 0; min-width: 26px; }
+  .exercise.done .check-btn { background: #22c55e; border-color: #22c55e; color: #fff; }
+  .remove-btn { width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(255,60,60,0.15); color: #ff4444; font-size: 1rem; cursor: pointer; flex-shrink: 0; display: none; align-items: center; justify-content: center; padding: 0; min-width: 26px; }
+  .edit-sets-btn { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700; text-align: right; white-space: nowrap; background: none; border: none; color: var(--text); cursor: pointer; padding: 0; display: none; text-decoration: underline dotted var(--muted); }
+  .edit-sets-btn small { display: block; font-size: 0.65rem; font-weight: 400; color: var(--muted); text-transform: uppercase; text-decoration: none; }
+  .add-ex-btn { width: 100%; padding: 12px; background: transparent; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; cursor: pointer; margin-top: 8px; display: none; }
+  .bottom-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .reset-btn, .edit-btn { flex: 1; padding: 12px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; cursor: pointer; min-height: 44px; }
+  .edit-btn.active { border-color: var(--push); color: var(--push); }
+  .rules { margin-top: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .rules h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .rules ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .rules li { font-size: 0.82rem; color: #ccc; padding-left: 14px; position: relative; }
+  .rules li::before { content: '→'; position: absolute; left: 0; color: var(--muted); }
+  .hidden { display: none !important; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .modal { background: #1e1e1e; border: 1px solid #333; border-radius: 16px; padding: 24px; width: 100%; max-width: 340px; }
+  .modal h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; text-transform: uppercase; margin-bottom: 16px; }
+  .modal input { width: 100%; background: #111; border: 1px solid #333; border-radius: 8px; padding: 12px; color: var(--text); font-size: 1rem; outline: none; margin-bottom: 12px; display: block; }
+  .modal input:focus { border-color: var(--push); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-btns button { flex: 1; padding: 14px; border-radius: 10px; border: none; font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; text-transform: uppercase; cursor: pointer; min-height: 52px; }
+  .btn-cancel { background: #2a2a2a; color: #aaa; }
+  .btn-confirm { background: var(--push); color: #fff; }
+
+  /* Install banner */
+  #install-banner { position: fixed; bottom: calc(16px + var(--safe-bottom)); left: 16px; right: 16px; background: #1e1e1e; border: 1px solid var(--push); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; z-index: 100; max-width: 448px; margin: 0 auto; }
+  #install-banner p { flex: 1; font-size: 0.85rem; color: #ccc; line-height: 1.4; }
+  #install-banner strong { color: var(--text); }
+  #install-now { background: var(--push); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+  #install-dismiss { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <h1 id="title-display">Jay's Gym Program</h1>
+    <input id="title-input" type="text" />
+    <button class="edit-title-btn" id="title-btn">✏️</button>
+  </div>
+  <p>3-Day Push / Pull / Legs · Recomp</p>
+</header>
+
+<div class="tabs">
+  <button class="tab push active" id="tab-push">Push</button>
+  <button class="tab pull" id="tab-pull">Pull</button>
+  <button class="tab legs" id="tab-legs">Legs</button>
+</div>
+
+<div id="push-day" class="push-day">
+  <div class="day-label"><span class="pill">Day 1</span><span class="muscles">Chest · Shoulders · Triceps</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="push-prog" style="width:0%"></div></div>
+  <div class="exercise-list" id="push-list"></div>
+  <button class="add-ex-btn" id="push-add">+ Add Exercise</button>
+  <div class="bottom-btns">
+    <button class="reset-btn" id="push-reset">Reset</button>
+    <button class="edit-btn" id="push-edit">Edit</button>
+  </div>
+</div>
+
+<div id="pull-day" class="pull-day hidden">
+  <div class="day-label"><span class="pill">Day 2</span><span class="muscles">Back · Biceps</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="pull-prog" style="width:0%"></div></div>
+  <div class="exercise-list" id="pull-list"></div>
+  <button class="add-ex-btn" id="pull-add">+ Add Exercise</button>
+  <div class="bottom-btns">
+    <button class="reset-btn" id="pull-reset">Reset</button>
+    <button class="edit-btn" id="pull-edit">Edit</button>
+  </div>
+</div>
+
+<div id="legs-day" class="legs-day hidden">
+  <div class="day-label"><span class="pill">Day 3</span><span class="muscles">Quads · Hamstrings · Glutes</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="legs-prog" style="width:0%"></div></div>
+  <div class="exercise-list" id="legs-list"></div>
+  <button class="add-ex-btn" id="legs-add">+ Add Exercise</button>
+  <div class="bottom-btns">
+    <button class="reset-btn" id="legs-reset">Reset</button>
+    <button class="edit-btn" id="legs-edit">Edit</button>
+  </div>
+</div>
+
+<div class="rules">
+  <h3>Rules</h3>
+  <ul>
+    <li>5-10 min cardio warmup before every session</li>
+    <li>Rest 60-90 seconds between sets</li>
+    <li>Hit top of rep range → add weight next session</li>
+    <li>5g creatine daily, even on rest days</li>
+    <li>Protein shake post workout if under daily target</li>
+  </ul>
+</div>
+
+<!-- Install Banner (shown on mobile browsers) -->
+<div id="install-banner" class="hidden">
+  <p><strong>Add to Home Screen</strong><br>Tap share then "Add to Home Screen" to install as an app</p>
+  <button id="install-now">Install</button>
+  <button id="install-dismiss">✕</button>
+</div>
+
+<!-- Add Modal -->
+<div class="overlay hidden" id="add-overlay">
+  <div class="modal">
+    <h3>Add Exercise</h3>
+    <input id="inp-name" type="text" placeholder="Exercise name (e.g. Cable Fly)" />
+    <input id="inp-target" type="text" placeholder="Muscle (e.g. Chest)" />
+    <input id="inp-sets" type="text" placeholder="Sets × Reps (e.g. 3 × 12)" />
+    <div class="modal-btns">
+      <button class="btn-cancel" id="add-cancel">Cancel</button>
+      <button class="btn-confirm" id="add-confirm">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sets Modal -->
+<div class="overlay hidden" id="sets-overlay">
+  <div class="modal">
+    <h3>Edit Sets × Reps</h3>
+    <input id="inp-sets-edit" type="text" placeholder="e.g. 4 × 8-10" />
+    <div class="modal-btns">
+      <button class="btn-cancel" id="sets-cancel">Cancel</button>
+      <button class="btn-confirm" id="sets-confirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+const DATA = {
+  push: [
+    ['Incline Chest Press','Upper chest','4 × 8-10'],
+    ['Flat Dumbbell Press','Mid chest','3 × 10-12'],
+    ['Lateral Raise','Side delts','4 × 12-15'],
+    ['Overhead Press','Front delts · shoulders','3 × 10-12'],
+    ['Tricep Pushdown','Triceps','3 × 12-15'],
+    ['Skull Crushers','Triceps · long head','3 × 10-12'],
+  ],
+  pull: [
+    ['Lat Pulldown','Lats · upper back','4 × 8-10'],
+    ['Low Row','Mid back · lats','4 × 10-12'],
+    ['Single Arm DB Row','Lats · rear delt','3 × 10-12'],
+    ['Face Pull','Rear delts · rotator cuff','3 × 15'],
+    ['Bicep Curl','Biceps','4 × 10-12'],
+    ['Hammer Curl','Brachialis · forearms','3 × 12'],
+  ],
+  legs: [
+    ['Leg Press','Quads · glutes','4 × 10-12'],
+    ['Romanian Deadlift','Hamstrings · glutes','4 × 10-12'],
+    ['Leg Extension','Quads isolation','3 × 12-15'],
+    ['Leg Curl','Hamstrings isolation','3 × 12-15'],
+    ['Goblet Squat','Quads · core','3 × 12'],
+    ['Glute Bridge','Glutes · hamstrings','3 × 15'],
+  ]
+};
+
+let activeDay = 'push';
+let editing = { push: false, pull: false, legs: false };
+let addTargetDay = null;
+let editSetsEl = null;
+let deferredPrompt = null;
+
+function makeExercise(name, target, sets) {
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.innerHTML = `
+    <div class="ex-info">
+      <div class="ex-name">${name}</div>
+      <div class="ex-target">${target}</div>
+    </div>
+    <div class="ex-sets">${sets}<small>sets × reps</small></div>
+    <button class="edit-sets-btn">${sets}<small>sets × reps</small></button>
+    <button class="check-btn">✓</button>
+    <button class="remove-btn">✕</button>
+  `;
+  div.querySelector('.check-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    div.classList.toggle('done');
+    updateProgress();
+  });
+  div.querySelector('.remove-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    div.remove();
+    updateProgress();
+  });
+  div.querySelector('.edit-sets-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    editSetsEl = div;
+    document.getElementById('inp-sets-edit').value = div.querySelector('.ex-sets').childNodes[0].textContent.trim();
+    document.getElementById('sets-overlay').classList.remove('hidden');
+  });
+  return div;
+}
+
+// Build lists
+['push','pull','legs'].forEach(day => {
+  const list = document.getElementById(day + '-list');
+  DATA[day].forEach(([n,t,s]) => list.appendChild(makeExercise(n,t,s)));
+});
+
+// Tabs
+['push','pull','legs'].forEach(day => {
+  document.getElementById('tab-' + day).addEventListener('click', () => {
+    document.getElementById(activeDay + '-day').classList.add('hidden');
+    document.getElementById('tab-' + activeDay).classList.remove('active');
+    activeDay = day;
+    document.getElementById(day + '-day').classList.remove('hidden');
+    document.getElementById('tab-' + day).classList.add('active');
+  });
+  document.getElementById(day + '-edit').addEventListener('click', () => {
+    editing[day] = !editing[day];
+    const dayEl = document.getElementById(day + '-day');
+    dayEl.querySelectorAll('.exercise').forEach(ex => {
+      ex.querySelector('.check-btn').style.display = editing[day] ? 'none' : 'flex';
+      ex.querySelector('.remove-btn').style.display = editing[day] ? 'flex' : 'none';
+      ex.querySelector('.ex-sets').style.display = editing[day] ? 'none' : 'block';
+      ex.querySelector('.edit-sets-btn').style.display = editing[day] ? 'block' : 'none';
+    });
+    document.getElementById(day + '-add').style.display = editing[day] ? 'block' : 'none';
+    const btn = document.getElementById(day + '-edit');
+    btn.textContent = editing[day] ? 'Done' : 'Edit';
+    btn.classList.toggle('active', editing[day]);
+  });
+  document.getElementById(day + '-reset').addEventListener('click', () => {
+    document.getElementById(day + '-day').querySelectorAll('.exercise').forEach(ex => ex.classList.remove('done'));
+    updateProgress();
+  });
+  document.getElementById(day + '-add').addEventListener('click', () => {
+    addTargetDay = day;
+    ['inp-name','inp-target','inp-sets'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('add-overlay').classList.remove('hidden');
+  });
+});
+
+// Add modal
+document.getElementById('add-cancel').addEventListener('click', () => document.getElementById('add-overlay').classList.add('hidden'));
+document.getElementById('add-confirm').addEventListener('click', () => {
+  const name = document.getElementById('inp-name').value.trim();
+  const target = document.getElementById('inp-target').value.trim();
+  const sets = document.getElementById('inp-sets').value.trim() || '3 × 10-12';
+  if (!name) return;
+  const ex = makeExercise(name, target, sets);
+  ex.querySelector('.check-btn').style.display = 'none';
+  ex.querySelector('.remove-btn').style.display = 'flex';
+  ex.querySelector('.ex-sets').style.display = 'none';
+  ex.querySelector('.edit-sets-btn').style.display = 'block';
+  document.getElementById(addTargetDay + '-list').appendChild(ex);
+  document.getElementById('add-overlay').classList.add('hidden');
+  updateProgress();
+});
+
+// Sets modal
+document.getElementById('sets-cancel').addEventListener('click', () => document.getElementById('sets-overlay').classList.add('hidden'));
+document.getElementById('sets-confirm').addEventListener('click', () => {
+  const val = document.getElementById('inp-sets-edit').value.trim();
+  if (val && editSetsEl) {
+    editSetsEl.querySelector('.ex-sets').childNodes[0].textContent = val;
+    editSetsEl.querySelector('.edit-sets-btn').childNodes[0].textContent = val;
+  }
+  document.getElementById('sets-overlay').classList.add('hidden');
+});
+
+// Title
+document.getElementById('title-btn').addEventListener('click', () => {
+  const display = document.getElementById('title-display');
+  const input = document.getElementById('title-input');
+  const btn = document.getElementById('title-btn');
+  if (input.style.display === 'block') {
+    if (input.value.trim()) display.textContent = input.value.trim();
+    input.style.display = 'none';
+    display.style.display = 'block';
+    btn.textContent = '✏️';
+  } else {
+    input.value = display.textContent;
+    display.style.display = 'none';
+    input.style.display = 'block';
+    input.focus();
+    btn.textContent = '✓';
+  }
+});
+
+function updateProgress() {
+  ['push','pull','legs'].forEach(day => {
+    const c = document.getElementById(day + '-day');
+    const total = c.querySelectorAll('.exercise').length;
+    const done = c.querySelectorAll('.exercise.done').length;
+    document.getElementById(day + '-prog').style.width = (total > 0 ? (done/total)*100 : 0) + '%';
+  });
+}
+
+// PWA install prompt (Android Chrome)
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.remove('hidden');
+});
+
+document.getElementById('install-now').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  }
+  document.getElementById('install-banner').classList.add('hidden');
+});
+
+document.getElementById('install-dismiss').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.add('hidden');
+});
+
+// Show iOS install hint if on Safari and not already installed
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+if (isIOS && !isStandalone) {
+  document.getElementById('install-banner').classList.remove('hidden');
+  document.getElementById('install-now').style.display = 'none';
+}
+</script>
+</body>
+</html>
